@@ -4,6 +4,7 @@
 #   - docker - build the tape image
 #   - unit-test - runs the go-test based unit tests
 #   - integration-test - runs the integration tests
+#   - install - installs a binary program to GOBIN path
 
 FABRIC_VERSION = latest
 INTERGATION_CASE = ANDLogic
@@ -22,7 +23,6 @@ PKGNAME = github.com/guoger/$(PROJECT_NAME)
 CGO_FLAGS = CGO_CFLAGS=" "
 ARCH=$(shell go env GOARCH)
 MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
-BINPATH=$(shell go env GOBIN)
 
 # defined in pkg/infra/version.go
 METADATA_VAR = Version=$(BASE_VERSION)
@@ -35,7 +35,6 @@ GO_TAGS ?=
 
 export GO_LDFLAGS GO_TAGS FABRIC_VERSION INTERGATION_CASE
 
-#.PHONY: tape
 tape:
 	@echo "Building tape program......"
 	go build -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" ./cmd/tape
@@ -56,10 +55,16 @@ integration-test:
 	./test/integration-test.sh $(FABRIC_VERSION) $(INTERGATION_CASE)
 
 .PHONY: install
-install: tape
-	@echo "Install tape to GOBIN......"
-ifneq ($(BINPATH),)
-	cp ./tape $(BINPATH)
-else
-	@echo "Warning: GOBIN is not configured!"
-endif
+install:
+	@echo "Install tape......"
+	go install -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" ./cmd/tape
+
+include gotools.mk
+
+.PHONY: basic-checks
+basic-checks: gotools-install linter
+
+.PHONY: linter
+linter:
+	@echo "LINT: Running code checks......"
+	./scripts/golinter.sh
