@@ -22,6 +22,7 @@ PKGNAME = github.com/guoger/$(PROJECT_NAME)
 CGO_FLAGS = CGO_CFLAGS=" "
 ARCH=$(shell go env GOARCH)
 MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
+BINPATH=$(shell go env GOBIN)
 
 # defined in pkg/infra/version.go
 METADATA_VAR = Version=$(BASE_VERSION)
@@ -53,3 +54,12 @@ unit-test:
 integration-test:
 	@echo "Run integration test......"
 	./test/integration-test.sh $(FABRIC_VERSION) $(INTERGATION_CASE)
+
+.PHONY: install
+install: tape
+	@echo "Install tape to GOBIN......"
+ifneq ($(BINPATH),)
+	cp ./tape $(BINPATH)
+else
+	@echo "Warning: GOBIN is not configured!"
+endif
